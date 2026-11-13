@@ -20,6 +20,7 @@ Release/
 
 # Local backups
 *.bak
+<<<<<<< HEAD
 
 # Independent 3D dependencies and generated runs
 .deps3d/
@@ -27,3 +28,9 @@ results3d/
 
 # Python acceptance helpers
 scripts3d/__pycache__/
+=======
+graphics_winbgim_backup.h
+
+# Locally generated numerical runs; curated reference data lives in examples/
+results/
+>>>>>>> 2493cc0c14b4108506304606ec1f4090074044bf
