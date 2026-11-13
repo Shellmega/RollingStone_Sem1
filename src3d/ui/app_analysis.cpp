@@ -1,7 +1,9 @@
 // Analysis tab: statistics, heat maps, trial list and the replay timeline.
 #include "ui/app_impl.h"
 #include <algorithm>
+#include <cerrno>
 #include <cmath>
+#include <cstdlib>
 namespace rs3d::gui {
 static const float kPad=16;
 static Color levelColor(Level l){return l==Level::ok?col::ok:(l==Level::warn?col::warn:(l==Level::error?col::danger:col::info));}
@@ -125,8 +127,13 @@ void App::drawAnalysisTab(R body){
     g.fill({c.x,c.y,c.w,1},col::line);c.space(12);
     ui_.pushId("trials");
     {R r=c.row(30,8);g.textVCenter(u8"转到试验 #",{r.x,r.y,92,30},13,col::dim);FieldOpt fo;fo.integer=true;fo.unit="";
-     if(ui_.field({r.x+92,r.y,r.w-92-60,30},"goto",gotoText_,fo)){}
-     if(ui_.button({r.right()-52,r.y,52,30},u8"转到",Variant::secondary)||(IsKeyPressed(KEY_ENTER)&&ui_.typing()&&false)){char*e=nullptr;auto v=std::strtoull(gotoText_.c_str(),&e,10);if(v>0)replay_.select(v);}}
+     bool submit=ui_.fieldFocused("goto")&&(IsKeyPressed(KEY_ENTER)||IsKeyPressed(KEY_KP_ENTER));
+     ui_.field({r.x+92,r.y,r.w-92-60,30},"goto",gotoText_,fo);
+     if(ui_.button({r.right()-52,r.y,52,30},u8"转到",Variant::secondary)||submit){
+         char*e=nullptr;errno=0;auto v=std::strtoull(gotoText_.c_str(),&e,10);
+         if(errno==0&&e!=gotoText_.c_str()&&*e=='\0'&&v>0&&a->directory&&v<=a->directory->trials.size())replay_.select(v);
+         else toast(u8"请输入已记录的有效试验编号。",col::warn);
+     }}
     ui_.popId();
     drawTrialList(c,260);
     ui_.endScroll(body,anaScroll_,c.used()+16);
@@ -136,6 +143,7 @@ void App::drawTimeline(R d){
     auto&g=gfx();R in=d.inset(16,10,16,8);
     if(!replay_.hasAnalysis()){g.textVCenter(u8"没有可回放的数据。完成一次运行或打开历史结果后，这里会出现时间轴。",in,13,col::dim);return;}
     auto t=replay_.trial();bool frames=t&&t->frames;
+    const bool compact=compactTimeline(d.w);const float extra=compact?40.f:0.f;
     ui_.pushId("tlbar");float x=in.x;const float bh=34;
     auto ib=[&](Icon ic,const std::string&tip,bool en,bool primary=false,float w=38){R r{x,in.y,w,bh};x+=w+4;return ui_.iconButton(r,ic,en,tip,false,{},primary?Variant::primary:Variant::secondary);};
     if(ib(Icon::toStart,u8"回到起点",frames))replay_.seek(t->firstTime);
@@ -146,9 +154,11 @@ void App::drawTimeline(R d){
     x+=10;
     {static const double speeds[]{.25,.5,1,2,4};int sel=2;for(int i=0;i<5;++i)if(std::abs(replay_.speed()-speeds[i])<1e-6)sel=i;
      if(ui_.segmented({x,in.y+3,230,28},"speed",{"0.25×","0.5×","1×","2×","4×"},sel,true))replay_.setSpeed(speeds[sel]);x+=240;}
-    {auto e=replay_.event();bool has=e&&e->status==FirstContactStatus::hit;if(ui_.iconButton({x,in.y,126,bh},Icon::target,has,has?u8"跳到石块第一次碰到挡板的瞬间（E）":u8"这次试验没有触板",false,u8"首次触板",Variant::secondary))replay_.jumpToFirstContact();x+=134;
-     bool pc=replay_.pauseAtContact();g.textVCenter(u8"触板时停顿",{x,in.y,84,bh},12,col::dim);if(ui_.toggle({x+84,in.y+6,40,22},"pc",pc,true,u8"回放经过首次触板时自动停顿片刻"))replay_.setPauseAtContact(pc);x+=134;}
-    if(replay_.followAvailable()){bool f=replay_.following();R r{in.right()-120,in.y,120,bh};if(ui_.iconButton(r,Icon::present,true,u8"跟随正在计算的试验",f,u8"实时跟随",Variant::secondary))replay_.setFollow(!f);}
+    if(compact)x=in.x;
+    const float secondaryY=in.y+extra;
+    {auto e=replay_.event();bool has=e&&e->status==FirstContactStatus::hit;if(ui_.iconButton({x,secondaryY,126,bh},Icon::target,has,has?u8"跳到石块第一次碰到挡板的瞬间（E）":u8"这次试验没有触板",false,u8"首次触板",Variant::secondary))replay_.jumpToFirstContact();x+=134;
+     bool pc=replay_.pauseAtContact();g.textVCenter(u8"触板时停顿",{x,secondaryY,84,bh},12,col::dim);if(ui_.toggle({x+84,secondaryY+6,40,22},"pc",pc,true,u8"回放经过首次触板时自动停顿片刻"))replay_.setPauseAtContact(pc);x+=134;}
+    if(replay_.followAvailable()){bool f=replay_.following();R r{in.right()-120,secondaryY,120,bh};if(ui_.iconButton(r,Icon::present,true,u8"跟随正在计算的试验",f,u8"实时跟随",Variant::secondary))replay_.setFollow(!f);}
     ui_.popId();
     // caption
     std::string cap=sfmt(u8"试验 #%llu",(unsigned long long)replay_.selected());
@@ -157,9 +167,9 @@ void App::drawTimeline(R d){
     if(replay_.following())cap=u8"实时跟随中  ·  "+cap;
     if(!replay_.error().empty())cap=u8"读取出错："+replay_.error();
     if(replay_.barrierHistoryMissing())cap+=u8"  ·  无挡板历史";
-    g.text(g.fit(cap,in.w,12),in.x,in.y+bh+8,12,replay_.error().empty()?col::dim:col::danger);
+    g.text(g.fit(cap,in.w,12),in.x,in.y+extra+bh+8,12,replay_.error().empty()?col::dim:col::danger);
     // scrubber
-    R track{in.x,in.y+bh+34,in.w,22};float ty=track.cy();g.fill({track.x,ty-3,track.w,6},col::field,3);
+    R track{in.x,in.y+extra+bh+34,in.w,22};float ty=track.cy();g.fill({track.x,ty-3,track.w,6},col::field,3);
     if(frames&&t->lastTime>t->firstTime){
         double span=t->lastTime-t->firstTime;auto px=[&](double time){return track.x+float((time-t->firstTime)/span*track.w);};
         float cx=px(std::clamp(replay_.cursor(),t->firstTime,t->lastTime));g.fill({track.x,ty-3,cx-track.x,6},alpha(col::accent,.8f),3);

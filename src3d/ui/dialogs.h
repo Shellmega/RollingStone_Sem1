@@ -3,6 +3,7 @@
 #include <vector>
 namespace rs3d::gui {
 void initDialogs();
+void shutdownDialogs();
 std::filesystem::path pickSceneFile(bool save,const std::filesystem::path&current,void*owner);
 std::filesystem::path pickFolder(const std::filesystem::path&start,void*owner,const wchar_t*title);
 void openInExplorer(const std::filesystem::path&path);

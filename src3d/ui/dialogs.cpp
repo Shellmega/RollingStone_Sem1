@@ -8,7 +8,9 @@
 #include <system_error>
 #include "ui/dialogs.h"
 namespace rs3d::gui {
-void initDialogs(){CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);}
+namespace {thread_local bool ownsCom=false;}
+void initDialogs(){if(!ownsCom)ownsCom=SUCCEEDED(CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED));}
+void shutdownDialogs(){if(ownsCom){CoUninitialize();ownsCom=false;}}
 std::filesystem::path pickSceneFile(bool save,const std::filesystem::path&current,void*owner){
     auto path=std::filesystem::absolute(current).lexically_normal();path.make_preferred();
     if(!std::filesystem::is_directory(path.parent_path()))path=std::filesystem::current_path()/path.filename();

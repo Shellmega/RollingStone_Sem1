@@ -4,8 +4,10 @@ set(CUSTOMIZE_BUILD ON CACHE BOOL "" FORCE)
 set(SUPPORT_FILEFORMAT_TTF ON CACHE BOOL "" FORCE)
 set(SUPPORT_FILEFORMAT_JPG ON CACHE BOOL "" FORCE) # terrain photo textures
 set(SUPPORT_MODULE_RAUDIO OFF CACHE BOOL "" FORCE)
+# App::captureShot owns F12 and its Unicode-aware output path. The built-in
+# handler also runs in EndDrawing and overwrites screenshot000.png after restart.
+set(SUPPORT_SCREEN_CAPTURE OFF CACHE BOOL "" FORCE)
 add_subdirectory("${RS_raylib_SOURCE_DIR}" raylib)
-target_include_directories(raylib SYSTEM INTERFACE "${RS_raygui_SOURCE_DIR}/src")
 
 
 # Pinned raylib 5.5 CUSTOMIZE_BUILD scans both conditional config.h definitions,

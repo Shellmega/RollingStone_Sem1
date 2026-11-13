@@ -1,5 +1,7 @@
 # RollingStone3D
 
+2026-11-13第二轮修复和验收见 [本轮复查记录](RECHECK_20261113.md)，包含Tab焦点、回车跳转、窄窗口回放与F1帮助修复。
+
 RollingStone3D 使用固定 r/V 随机凸多面体、真实三维刚体、参数化地形和刚性/弹性挡板。新增同批固定随机障碍、全部 trial 轨迹、全路径与首次触板热图，以及从保存帧读取的全 trial 时间轴。操作、统计口径、格式和兼容说明见 [障碍与分析回放](ANALYSIS_AND_TIMELINE.md)；本次验收证据见 [F0–F5验收记录](OBSTACLES_HEATMAP_TIMELINE_VALIDATION.md)。原版、采样器与弹性挡板的历史验证保留在 VALIDATION.md。构建、运行、命令行参数和界面说明见 [根目录 README](../../README.md)。
 
 构建、运行和命令行参数见 [根目录 README](../../README.md)：先 `scripts3d/bootstrap.ps1` 取依赖，再 `build_3d.cmd`、`test_3d.cmd`、`run_3d.cmd`。
