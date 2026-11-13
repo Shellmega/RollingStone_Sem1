@@ -50,7 +50,7 @@ void Ui::begin(float w,float h){
     winW_=w;winH_=h;
     chars_.clear();for(int c=GetCharPressed();c>0;c=GetCharPressed())chars_.push_back(c);
     if(!hoverSeen_)hoverId_=0;hoverSeen_=false;tipText_.clear();
-    wheelUsed_=false;fieldClicked_=false;cursor_=MOUSE_CURSOR_DEFAULT;blocked_=false;menuBlock_=menuOpen_;
+    wheelUsed_=false;fieldClicked_=false;keyboardHandled_=false;cursor_=MOUSE_CURSOR_DEFAULT;blocked_=false;menuBlock_=menuOpen_;
     prevOrder_.swap(order_);order_.clear();
     if(!in.down&&!in.pressed&&!in.released)active_=0; // keep the id on the release frame so interact() can fire the click
     if(!in.focused){active_=0;}
@@ -135,7 +135,7 @@ bool Ui::segmented(R r,const std::string&k,const std::vector<std::string>&labels
     return changed;
 }
 bool Ui::field(R r,const std::string&key,std::string&value,const FieldOpt&o){
-    auto&g=gfx();auto fid=id(key+"#fld");order_.push_back(fid);
+    auto&g=gfx();auto fid=id(key+"#fld");if(o.enabled)order_.push_back(fid);
     bool hover=o.enabled&&hovered(r);bool changed=false;
     if(hover){setCursor(MOUSE_CURSOR_IBEAM);markHover(fid,"",r);}
     auto cps=codepointsOf(value);
@@ -150,7 +150,9 @@ bool Ui::field(R r,const std::string&key,std::string&value,const FieldOpt&o){
         }
     }
     bool editing=focus_==fid&&o.enabled;
-    if(editing&&in.focused){
+    if(editing&&in.focused&&!keyboardHandled_){
+        // Tab can focus a field drawn later in this frame. Consume these keys once.
+        keyboardHandled_=true;
         int cur=std::clamp(edit_.cursor,0,int(cps.size()));
         auto allowed=[&](int c){if(c<32)return false;if(o.integer)return c>='0'&&c<='9';if(o.numeric)return (c>='0'&&c<='9')||c=='+'||c=='-'||c=='.'||c=='e'||c=='E';return true;};
         auto insert=[&](int c){if(!allowed(c)||cps.size()>=120)return;if(edit_.selectAll){cps.clear();cur=0;edit_.selectAll=false;}cps.insert(cps.begin()+cur,c);++cur;changed=true;};

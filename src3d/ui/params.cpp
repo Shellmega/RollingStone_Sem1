@@ -143,9 +143,9 @@ void Form::load(const SceneDraft&d){
     applied_=now_;outputRoot=appliedOutputRoot=d.outputRoot;
 }
 void Form::rebase(const SceneDraft&d){
-    SceneEditor fresh(d);auto keepNow=now_;
+    SceneEditor fresh(d);const bool keepOutputEdit=pendingOutput();
     for(auto&f:fresh.fields){auto*def=findDef(f.key);if(!def)continue;auto v=split(*def,f.text.data());bool wasPending=pending(f.key);applied_[f.key]=v;if(!wasPending)now_[f.key]=v;}
-    (void)keepNow;appliedOutputRoot=d.outputRoot;if(outputRoot==appliedOutputRoot)outputRoot=d.outputRoot;
+    appliedOutputRoot=d.outputRoot;if(!keepOutputEdit)outputRoot=d.outputRoot;
 }
 void Form::setResolved(const std::string&key,double v){char b[48];std::snprintf(b,sizeof(b),"%.6g",v);resolved_[key]=b;}
 bool Form::pending(const std::string&key)const{auto it=now_.find(key);auto ia=applied_.find(key);if(it==now_.end()||ia==applied_.end())return false;return it->second.a!=ia->second.a||it->second.b!=ia->second.b;}

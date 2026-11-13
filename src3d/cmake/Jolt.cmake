@@ -11,5 +11,12 @@ set(PROFILER_IN_DEBUG_AND_RELEASE OFF CACHE BOOL "" FORCE)
 set(ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
 set(GENERATE_DEBUG_SYMBOLS OFF CACHE BOOL "Use embedded /Z7 instead of PDB server" FORCE)
 add_subdirectory("${RS_JoltPhysics_SOURCE_DIR}/Build" jolt)
+# CMake's generated PCH contains absolute UTF-8 paths. Without this, a Chinese
+# workspace is decoded as CP936 and Jolt/Jolt.h becomes an invalid pathname.
+target_compile_options(Jolt PRIVATE /utf-8)
+if(CMAKE_GENERATOR MATCHES "Ninja")
+  set_property(TARGET Jolt PROPERTY RULE_LAUNCH_LINK
+    "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"${CMAKE_CURRENT_SOURCE_DIR}/../scripts3d/msvc_link.ps1\"")
+endif()
 include("${CMAKE_CURRENT_LIST_DIR}/Observer.cmake")
 

@@ -14,6 +14,7 @@ static fs::path findAsset(const std::string&rel){
     return {};
 }
 App::App(const SceneDraft&draft,const AppOptions&options):opt_(options),editDraft_(draft){
+    previewMode_=options.preview==2?0:1;
     bindSession(std::make_unique<Session>(draft));
     form_=std::make_unique<Form>(session_->draft());refreshResolved();
 }
@@ -27,7 +28,7 @@ void App::refreshResolved(){
 }
 void App::toast(const std::string&t,Color c){if(opt_.tour)return;toasts_.push_back({t,c,now_+3.2});if(toasts_.size()>4)toasts_.erase(toasts_.begin());}
 void App::confirm(const std::string&title,const std::string&body,const std::string&ok,std::function<void()> onOk){modal_={true,title,body,ok,std::move(onOk)};}
-void App::setTab(Tab t){if(log_.is_open())log_<<"tab="<<int(t)<<std::endl;tab_=t;ui_.blur();if(t==Tab::analysis&&!replay_.hasAnalysis()&&!demo_){}}
+void App::setTab(Tab t){if(log_.is_open())log_<<"tab="<<int(t)<<std::endl;tab_=t;ui_.blur();}
 void App::setDemo(bool on){demo_=on;ui_.blur();gfx().setScale(baseScale_*zoom_*(on?1.25f:1.f));}
 // ---------------------------------------------------------------- actions
 bool App::applyEdits(){
@@ -77,6 +78,7 @@ void App::openResults(fs::path dir){
     auto go=[this,dir]{
         try{
             auto archive=openResultArchive(dir,opt_.diagnostic);bindSession(std::make_unique<Session>(archive));
+            form_=std::make_unique<Form>(session_->draft());refreshResolved();
             reframe_=true;setTab(Tab::analysis);
             toast(u8"已打开结果："+dir.filename().u8string()+(archive->notice.empty()?"":u8"（有提示）"),archive->notice.empty()?col::ok:col::warn);
         }catch(const std::exception&e){toast(u8"无法打开结果："+friendly(e.what()),col::danger);}
@@ -98,7 +100,9 @@ int App::run(){
     SetConfigFlags(flags);
     int w=opt_.width>0?opt_.width:1440,h=opt_.height>0?opt_.height:880;
     SetTraceLogLevel(LOG_WARNING);
-    InitWindow(w,h,u8"滚石模拟 · RollingStone 3D");SetExitKey(KEY_NULL);initDialogs();
+    InitWindow(w,h,u8"滚石模拟 · RollingStone 3D");
+    if(!IsWindowReady())throw std::runtime_error("Cannot open the 3D window. OpenGL 3.3 support is required.");
+    SetExitKey(KEY_NULL);initDialogs();
     baseScale_=opt_.scale>0?opt_.scale:std::max(1.f,GetWindowScaleDPI().x);
     if(opt_.width<=0){int mw=GetMonitorWidth(GetCurrentMonitor()),mh=GetMonitorHeight(GetCurrentMonitor());int tw=int(1440*baseScale_),th=int(880*baseScale_);if(mw>0&&mh>0){tw=std::min(tw,int(mw*.94));th=std::min(th,int(mh*.9));}SetWindowSize(tw,th);}
     {
@@ -106,9 +110,14 @@ int App::run(){
         int ww=GetScreenWidth(),wh=GetScreenHeight(); // the grown window must not hang off the screen, or the top-right gizmo is unreachable
         if(mw>0&&mh>0)SetWindowPosition(int(mp.x)+std::max(0,(mw-ww)/2),int(mp.y)+std::max(0,(mh-wh)/2-12));
     }
+    // An explicit physical window size must remain usable even on a high-DPI desktop.
+    baseScale_=std::min(baseScale_,std::max(.5f,std::min(GetScreenWidth()/940.f,GetScreenHeight()/580.f)));
     SetWindowMinSize(int(940*baseScale_),int(580*baseScale_));
     auto reg=findAsset("assets/fonts/NotoSansSC-Regular.ttf"),bold=findAsset("assets/fonts/NotoSansSC-Bold.ttf");
-    if(reg.empty()||!gfx().init(reg,bold.empty()?reg:bold))TraceLog(LOG_ERROR,"font assets/fonts/NotoSansSC-Regular.ttf not found; Chinese text will not render");
+    if(reg.empty()||!gfx().init(reg,bold.empty()?reg:bold)) {
+        shutdownDialogs();CloseWindow();
+        throw std::runtime_error("Missing or unreadable assets/fonts/NotoSansSC-Regular.ttf. Keep the assets folder next to RollingStone3D.exe.");
+    }
     gfx().setScale(baseScale_);
     viz::setTerrainTexture(opt_.terrainTex);
     if(!opt_.inputLog.empty())log_.open(opt_.inputLog,std::ios::trunc);
@@ -132,12 +141,12 @@ int App::run(){
         if(opt_.autoExitSeconds>0&&std::chrono::duration<double>(std::chrono::steady_clock::now()-started).count()>opt_.autoExitSeconds)quit_=true;
     }
     if(running())session_->cancel();
-    vp_.release();LineBuffer::releaseShared();viz::release();gfx().shutdown();CloseWindow();return 0;
+    vp_.release();LineBuffer::releaseShared();viz::release();gfx().shutdown();shutdownDialogs();CloseWindow();return 0;
 }
 void App::layout(){
     float s=gfx().scale();W_=GetScreenWidth()/s;H_=GetScreenHeight()/s;
     float topH=50,leftW=std::clamp(W_*.27f,330.f,420.f);
-    float dockH=tab_==Tab::analysis?124.f:tab_==Tab::run?84.f:34.f;
+    float dockH=tab_==Tab::analysis?(compactTimeline(W_-leftW)?164.f:124.f):tab_==Tab::run?84.f:34.f;
     if(demo_){topR_={0,0,0,0};leftR_={0,0,0,0};dockR_={0,0,0,0};viewR_={0,0,W_,H_};return;}
     topR_={0,0,W_,topH};leftR_={0,topH,leftW,H_-topH};viewR_={leftW,topH,W_-leftW,H_-topH-dockH};dockR_={leftW,H_-dockH,W_-leftW,dockH};
 }
@@ -145,6 +154,8 @@ void App::frame(float dt){
     BeginDrawing();ClearBackground(col::bgTop);
     float want=baseScale_*zoom_*(demo_?1.25f:1.f);if(std::abs(gfx().scale()-want)>1e-4f)gfx().setScale(want);
     sv_=session_->view();replay_.sync(sv_,dt);layout();
+    if(IsKeyPressed(KEY_F1)&&!modal_.open){help_=!help_;ui_.blur();}
+    if(IsKeyPressed(KEY_F12))captureShot("screenshot");
     if(!ui_.typing()&&!modal_.open&&!help_)shortcuts();
     ui_.begin(W_,H_);occluders_.clear();
     if(log_.is_open()){Vector2 mp=GetMousePosition();int b=(ui_.in.pressed?1:0)|(ui_.in.down?2:0)|(ui_.in.released?4:0)|(ui_.in.focused?8:0);
@@ -159,16 +170,15 @@ void App::frame(float dt){
     if(modal_.open)drawModal();
     drawToasts();
     ui_.end();
-    gfx().flushFonts();
     tourTick();
     if(shotPending_)flushShot();
     EndDrawing();
+    // Font atlases are referenced by queued draw commands until EndDrawing flushes them.
+    gfx().flushFonts();
 }
 void App::shortcuts(){
     bool ctrl=IsKeyDown(KEY_LEFT_CONTROL)||IsKeyDown(KEY_RIGHT_CONTROL);
-    if(IsKeyPressed(KEY_F1))help_=true;
     if(IsKeyPressed(KEY_F5))setDemo(!demo_);
-    if(IsKeyPressed(KEY_F12))captureShot("screenshot");
     if(IsKeyPressed(KEY_ESCAPE)){if(demo_)setDemo(false);}
     if(ctrl&&(IsKeyPressed(KEY_EQUAL)||IsKeyPressed(KEY_KP_ADD))){zoom_=std::min(1.6f,zoom_+.1f);}
     if(ctrl&&(IsKeyPressed(KEY_MINUS)||IsKeyPressed(KEY_KP_SUBTRACT))){zoom_=std::max(.8f,zoom_-.1f);}
@@ -230,7 +240,7 @@ void App::flushShot(){
 }
 // ---------------------------------------------------------------- tour (automated walkthrough used for verification screenshots)
 void App::tourTick(){
-    if(!opt_.tour)return;static fs::path dummy;
+    if(!opt_.tour)return;
     if(tourWait_>0){--tourWait_;return;}
     auto wait=[&](int n){tourWait_=n;++tourStep_;};
     auto shot=[&](const char*n,int after=6){captureShot(n);wait(after);};

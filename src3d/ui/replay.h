@@ -16,7 +16,7 @@ class Replay {
     std::shared_ptr<const PlaybackSample> sample_;
     std::uint64_t selected_=1,request_=0;
     double cursor_=0,speed_=1,holdUntil_=0;
-    bool follow_=true,followAvailable_=false,playing_=false,needSeek_=false,eventPose_=false,pauseAtContact_=true,historyContext_=false,archive_=false;
+    bool follow_=true,followAvailable_=false,playing_=false,needSeek_=false,eventPose_=false,pauseAtContact_=true,archive_=false;
     std::string readError_;
     std::vector<std::uint64_t> listed_;
     std::optional<std::size_t> cell_;MapKind listKind_=MapKind::route;

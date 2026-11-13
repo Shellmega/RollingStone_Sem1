@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "package": "C:\\Users\\20904\\Desktop\\工程互联网\\RollingStone3D_最终版_20261113",
+  "gui_headless_identical": true,
+  "chinese_paths": true,
+  "preview_zero_honoured": true,
+  "readonly_physics_updates": 0,
+  "replay_pass": true,
+  "no_developer_environment": true,
+  "self_test_22": true,
+  "executable_sha256": "203fa5fc5d82e9ba3ed59ff05effe46988c7f72b58df2e9a3c27c27d3dcc03b5",
+  "screenshot": "C:\\Users\\20904\\Desktop\\工程互联网\\_制作过程\\修复3D_20261113\\发布包普通环境验收\\截图\\screenshot.png"
+}

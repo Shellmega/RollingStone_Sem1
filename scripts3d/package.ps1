@@ -3,37 +3,31 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $target = [IO.Path]::GetFullPath((Join-Path $root $Destination))
 if (Test-Path -LiteralPath $target) { throw 'Choose a new package directory; existing packages are never overwritten.' }
-$binary = Join-Path $root 'build/3d/bin/RollingStone3D.exe'
+$binary = Join-Path $root 'build/3d_final/bin/RollingStone3D.exe'
 if (!(Test-Path -LiteralPath $binary)) { throw 'Run build_3d.cmd Release first.' }
 New-Item -ItemType Directory -Path $target | Out-Null
 Copy-Item -LiteralPath $binary -Destination $target
 Copy-Item -LiteralPath (Join-Path $root 'run_elastic_3d.cmd') -Destination $target
 Copy-Item -LiteralPath (Join-Path $root 'run_obstacles_3d.cmd') -Destination $target
-Get-ChildItem -LiteralPath (Join-Path $root 'build/3d/bin') -Filter 'rs3d_*.exe' | Copy-Item -Destination $target
+New-Item -ItemType Directory -Path (Join-Path $target 'selftests') | Out-Null
+Get-ChildItem -LiteralPath (Join-Path $root 'build/3d_final/bin') -Filter 'rs3d_*.exe' | Copy-Item -Destination (Join-Path $target 'selftests')
 Copy-Item -LiteralPath (Join-Path $root 'configs3d') -Destination $target -Recurse
 New-Item -ItemType Directory -Path (Join-Path $target 'assets') | Out-Null
 Copy-Item -LiteralPath (Join-Path $root 'assets/fonts') -Destination (Join-Path $target 'assets/fonts') -Recurse # Noto Sans SC (OFL)
 Copy-Item -LiteralPath (Join-Path $root 'assets/textures') -Destination (Join-Path $target 'assets/textures') -Recurse # default terrain textures (CC0)
 $docs = Join-Path $target 'docs'
 New-Item -ItemType Directory -Path $docs | Out-Null
-foreach ($name in @('README.md','DEPENDENCIES.md','VALIDATION.md','SHAPE_SAMPLER.md','ELASTIC_BARRIER.md','ANALYSIS_AND_TIMELINE.md','OBSTACLES_HEATMAP_TIMELINE_VALIDATION.md','OBSTACLE_DISTRIBUTION_FIX.md','ELASTIC_DEMO_FIX.md')) {
+foreach ($name in @('README.md','DEPENDENCIES.md','VALIDATION.md','SHAPE_SAMPLER.md','ELASTIC_BARRIER.md','ANALYSIS_AND_TIMELINE.md','OBSTACLES_HEATMAP_TIMELINE_VALIDATION.md','OBSTACLE_DISTRIBUTION_FIX.md','ELASTIC_DEMO_FIX.md','FINAL_FIXES_20261113.md','RECHECK_20261113.md')) {
     Copy-Item -LiteralPath (Join-Path $root ('docs/3d/'+$name)) -Destination $docs
 }
-$readme = @'
-# RollingStone3D
-
-双击 run_obstacles_3d.cmd 打开弹性挡板、障碍、热图与时间轴演示，点击“批量”开始。
-双击 run_elastic_3d.cmd 打开弹性挡板场景。
-
-组合场景前3次未碰板，第4次有真实撞击。完成至少4次后，选择trial 4并拖到约11.87秒，可查看位移和回弹。随包有样例时，可用 `run_3d.cmd --view-results examples/demo_results` 直接打开记录。
-
-完整说明见 [操作文档](docs/README.md)、[统计与回放格式](docs/ANALYSIS_AND_TIMELINE.md) 和 [验收记录](docs/OBSTACLES_HEATMAP_TIMELINE_VALIDATION.md)。
-
-读取保存结果：`run_3d.cmd --view-results "结果目录"`，或在窗口“打开结果”选择 manifest.ini。
-执行随包测试：`run_3d.cmd --self-test`。
-界面字体 Noto Sans SC（OFL）和地形纹理（CC0）随包提供在 assets 目录；package-sha256.json 可核对随包文件。
-'@
-[IO.File]::WriteAllText((Join-Path $target 'README.md'),$readme,[Text.UTF8Encoding]::new($false))
+Copy-Item -LiteralPath (Join-Path $root 'docs/3d/RELEASE_README.md') -Destination (Join-Path $target 'README.md')
+# The release documentation is one level below its README; the source docs are two.
+$docReadme = [IO.File]::ReadAllText((Join-Path $docs 'README.md')).Replace('(../../README.md)', '(../README.md)')
+[IO.File]::WriteAllText((Join-Path $docs 'README.md'),$docReadme,[Text.UTF8Encoding]::new($false))
+foreach ($name in @('FINAL_ACCEPTANCE.json','RECHECK_ACCEPTANCE.json')) {
+    $acceptance = Join-Path $root ('docs/3d/'+$name)
+    if (Test-Path -LiteralPath $acceptance) { Copy-Item -LiteralPath $acceptance -Destination $docs }
+}
 Copy-Item -LiteralPath (Join-Path $root 'docs/3d/evidence') -Destination (Join-Path $docs 'evidence') -Recurse
 if ($ExampleDirectory) {
     $example = [IO.Path]::GetFullPath((Join-Path $root $ExampleDirectory))
@@ -46,7 +40,7 @@ $notices = Join-Path $target 'licenses'
 New-Item -ItemType Directory -Path $notices | Out-Null
 Copy-Item -LiteralPath (Join-Path $root 'licenses/terrain-textures-CC0.txt') -Destination $notices
 Copy-Item -LiteralPath (Join-Path $root 'licenses/NotoSansSC-OFL.txt') -Destination $notices
-foreach ($vendor in @('JoltPhysics','raylib','raygui')) {
+foreach ($vendor in @('JoltPhysics','raylib')) {
     Copy-Item -LiteralPath (Join-Path $root ('.deps3d/'+$vendor+'/LICENSE')) -Destination (Join-Path $notices ($vendor+'.txt'))
 }
 # Several bundled raylib components carry notices inside their source headers.

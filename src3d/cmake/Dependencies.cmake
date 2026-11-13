@@ -15,6 +15,5 @@ endfunction()
 rs_dependency(JoltPhysics 0373ec0dd762e4bc2f6acdb08371ee84fa23c6db)
 if(RS3D_GUI)
   rs_dependency(raylib c1ab645ca298a2801097931d1079b10ff7eb9df8)
-  rs_dependency(raygui 25c8c65a6e5f0f4d4b564a0343861898c6f2778b)
 endif()
 
