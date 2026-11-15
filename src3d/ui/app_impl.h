@@ -19,6 +19,7 @@ namespace rs3d::gui {
 inline std::string sfmt(const char*f,...){char b[640];va_list a;va_start(a,f);std::vsnprintf(b,sizeof(b),f,a);va_end(a);return b;}
 inline std::string friendly(const std::string&technical){auto h=explainError(technical);if(h.keys.empty()&&h.message==u8"配置未通过检查：")return u8"出错："+technical;return h.message;}
 enum class Tab { scene,run,analysis };
+inline bool compactTimeline(float dockWidth){return dockWidth-32<870;}
 struct Toast {std::string text;Color color;double until;};
 struct Modal {bool open=false;std::string title,body,ok;std::function<void()> onOk;};
 // Vertical layout cursor used by the scrolling panels.
@@ -59,7 +60,6 @@ private:
     std::shared_ptr<const AnalysisSnapshot> mapAnalysis_;MapData map_;
     std::uint64_t trajVersion_=~0ull;const void*trajOwner_=nullptr;
     int previewMode_=0;
-    std::filesystem::path shotPath_;
     // tour
     std::ofstream log_;bool tabLogged_=false;bool dumpCtl_=false;int failedFrames_=0;int dumpFrame_=0;Vector2 lastMouse_{-1,-1};int lastBtn_=-1;std::filesystem::path tourDir_;int tourStep_=0,tourWait_=0;std::string shotName_;
     // --- core

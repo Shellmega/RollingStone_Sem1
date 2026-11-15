@@ -13,6 +13,7 @@ struct AppOptions {
     float scale=0;              // UI scale; 0 = system DPI
     double autoExitSeconds=0;   // smoke runs
     bool autoStartSingle=false,autoStartBatch=false;
+    int preview=2;             // Explicit --preview 0/2 must also control the GUI worker.
 };
 int runApplication(const SceneDraft&draft,const AppOptions&options);
 }

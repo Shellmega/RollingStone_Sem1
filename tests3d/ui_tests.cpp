@@ -40,6 +40,11 @@ void formValidation(){
     form.validate();CHECK(form.valid());auto e=form.draft();CHECK(e.barrier.enabled&&e.barrier.elastic);
     // Rebase keeps unapplied edits but adopts new applied values.
     SceneDraft other=d;other.previewSeed=99;Form f2(d);f2.value("run.count").a="321";f2.rebase(other);CHECK(f2.value("run.count").a=="321");CHECK(f2.appliedValue("preview.seed").a=="99");CHECK(f2.value("preview.seed").a=="99");
+    // A new applied output directory follows the session only when the user has no pending edit.
+    Form output(d);other.outputRoot="new_applied_output";output.rebase(other);
+    CHECK(output.outputRoot==other.outputRoot);CHECK(!output.pendingOutput());
+    output.outputRoot="my_pending_output";other.outputRoot="another_applied_output";output.rebase(other);
+    CHECK(output.outputRoot=="my_pending_output");CHECK(output.appliedOutputRoot==other.outputRoot);CHECK(output.pendingOutput());
 }
 void errors(){
     auto h=explainError("run count outside 1..1000000");CHECK(!h.keys.empty()&&h.keys[0]=="run.count");
@@ -61,7 +66,7 @@ void maps(){
     m=buildMap(*cfg,a,MapKind::contact,Metric::conditional,false);CHECK(!m.usable); // no contact accumulator
 }
 }
-int main(int argc,char**argv){
+int wmain(int argc,wchar_t**argv){
     try{
         JoltRuntime runtime;
         formRoundTrip(SceneDraft{},"default");

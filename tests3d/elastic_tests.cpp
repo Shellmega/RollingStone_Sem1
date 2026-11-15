@@ -76,4 +76,4 @@ void demoPreset(const std::filesystem::path&path){
     check(moved,"first ten combined demo trials show no visible elastic impact");
 }
 }
-int main(int argc,char**argv){try{JoltRuntime runtime;std::cout<<std::setprecision(12);if(argc==2){demoPreset(std::filesystem::u8path(argv[1]));return 0;}double coarse=oscillator(.002),fine=oscillator(.001);check(fine<coarse,"oscillator step refinement did not improve error");impact(0);impact(35);finiteAndEnergy();decayAndLimits();impactRefinement();std::cout<<"PASS elastic support numerical tests\n";return 0;}catch(const std::exception&e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}}
+int wmain(int argc,wchar_t**argv){try{JoltRuntime runtime;std::cout<<std::setprecision(12);if(argc==2){demoPreset(std::filesystem::path(argv[1]));return 0;}double coarse=oscillator(.002),fine=oscillator(.001);check(fine<coarse,"oscillator step refinement did not improve error");impact(0);impact(35);finiteAndEnergy();decayAndLimits();impactRefinement();std::cout<<"PASS elastic support numerical tests\n";return 0;}catch(const std::exception&e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}}

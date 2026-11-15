@@ -20,11 +20,11 @@ struct ScrollState {float y=0,content=0;bool drag=false;float dragOffset=0;};
 class Ui {
     struct Edit {std::uint32_t id=0;std::string original;int cursor=0;bool selectAll=false;};
     std::vector<std::uint32_t> idStack_{2166136261u};
-    std::uint32_t active_=0,hoverId_=0,focus_=0,lastFocus_=0;
+    std::uint32_t active_=0,hoverId_=0,focus_=0;
     double hoverSince_=0;bool hoverSeen_=false;
     std::string tipText_;float tipX_=0,tipY_=0;
     Edit edit_;
-    bool fieldClicked_=false,wheelUsed_=false,inOverlay_=false,blocked_=false;
+    bool fieldClicked_=false,wheelUsed_=false,inOverlay_=false,blocked_=false,keyboardHandled_=false;
     std::vector<std::uint32_t> order_,prevOrder_;
     std::vector<std::function<void()>> overlays_;
     int cursor_=MOUSE_CURSOR_DEFAULT;
@@ -46,6 +46,7 @@ public:
     void setBlocked(bool b){blocked_=b;}
     bool hovered(R r)const{return !blocked_&&hoverRaw(r);}
     bool typing()const{return focus_!=0;}
+    bool fieldFocused(const std::string&key)const{return focus_==id(key+"#fld");}
     void blur(){focus_=0;edit_={};}
     bool wheelAvailable()const{return !wheelUsed_;}
     void consumeWheel(){wheelUsed_=true;}

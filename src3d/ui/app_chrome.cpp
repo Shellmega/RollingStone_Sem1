@@ -183,7 +183,7 @@ void App::drawModal(){
 }
 void App::drawToasts(){
     auto&g=gfx();toasts_.erase(std::remove_if(toasts_.begin(),toasts_.end(),[&](const Toast&t){return t.until<now_;}),toasts_.end());
-    float y=H_-(demo_?110:(tab_==Tab::analysis?144:tab_==Tab::run?104:54));
+    float y=demo_?H_-110:dockR_.y-20;
     for(int i=int(toasts_.size())-1;i>=0;--i){auto&t=toasts_[size_t(i)];float w=std::min(W_-40,g.textWidth(t.text,13)+44);R box{viewR_.cx()-w/2,y-34,w,32};
         g.fill(box,rgba(0x1f2a36,240),16);g.stroke(box,alpha(t.color,.7f),1,16);g.circle(box.x+16,box.cy(),4,t.color);g.text(g.fit(t.text,w-44,13),box.x+30,box.y+7,13,col::text);y-=38;}
 }
@@ -199,7 +199,7 @@ void App::drawHelp(){
     kv(u8"③ 分析",u8"查看统计与热图（路径频率、首次触板、坡脚分布），逐次试验回放，拖动时间轴、跳到首次触板瞬间。");
     y+=6;sec(u8"鼠标与键盘");
     kv(u8"三维视图",u8"左键拖动旋转，右键或中键拖动平移，滚轮缩放；1 透视 · 2 俯视 · 3 侧视 · 4 跟随石块。右上角的导航轴：点轴球把视角对齐到该轴方向，在圆盘上拖动旋转视角（x 沿坡向下，y 横向，z 向上，与输出文件一致）。");
-    kv("Tab / Shift+Tab",u8"切换 场景 / 运行 / 分析");kv("Ctrl+Enter",u8"应用待修改的配置");kv("R",u8"场景页：换一块预览石块");
+    kv("Tab / Shift+Tab",u8"编辑输入框时切换到下一个/上一个可用输入框；其余时候切换 场景 / 运行 / 分析");kv("Ctrl+Enter",u8"未编辑输入框时应用待修改的配置");kv("R",u8"场景页：换一块预览石块");
     kv(u8"空格",u8"分析页：播放/暂停回放；运行页：暂停/继续计算");kv(u8"← →  ↑ ↓",u8"逐帧前进后退；上一个/下一个试验");kv("E",u8"跳到首次触板瞬间");
     kv("Ctrl+S / Ctrl+O",u8"保存场景 / 打开结果文件夹");kv("F5  F1  F12",u8"演示模式 / 本帮助 / 保存当前画面截图");kv(u8"Ctrl + 加减 / 0",u8"放大、缩小、还原界面");
     y+=6;sec(u8"怎样读热图");
@@ -207,6 +207,6 @@ void App::drawHelp(){
     kv(u8"条件概率",u8"“触板的试验中”落在该格的比例 H / B，只有当所有试验的触板状态都已确认时才可用。");
     kv(u8"首次触板",u8"石块第一次与挡板接触的位置；弹性挡板会真实地位移和回弹。");
     ui_.endScroll(view,helpScroll_,y+helpScroll_.y-view.y);ui_.popId();
-    if(IsKeyPressed(KEY_ESCAPE)||IsKeyPressed(KEY_F1))help_=false;
+    if(IsKeyPressed(KEY_ESCAPE))help_=false;
 }
 }

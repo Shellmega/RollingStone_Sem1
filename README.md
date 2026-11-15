@@ -1,4 +1,14 @@
+> **2026-11-13 最终修复版**：优先使用 `build_3d.cmd` / `run_3d.cmd`。新构建目录为 `build/3d_final`，旧构建缓存保留。已修复中文目录下的PCH/链接响应文件编码、GUI预览选项、输出目录刷新和字体资源释放顺序。完整记录见 [最终修复说明](docs/3d/FINAL_FIXES_20261113.md)。未使用的raygui依赖已移除。
+
 # 山区滚石模拟 RollingStone3D
+
+## 下载并运行最终版
+
+仓库已包含 [完整运行包：RollingStone3D_最终版_20261113.zip](release/RollingStone3D_最终版_20261113.zip)。下载并完整解压后，双击其中的 `RollingStone3D.exe`；无需安装 Visual Studio。请保留随包的 `assets`、`configs3d` 等文件夹。
+
+源码开发继续使用本仓库的 `src3d/`、`build_3d.cmd`、`run_3d.cmd` 和 `test_3d.cmd`。运行包说明与校验值见 [release/README.md](release/README.md)。
+
+**2026-11-13 第二轮复查**：修复参数框 Tab 连跳、窄窗口时间轴溢出、编号回车跳转与 F1 帮助立即关闭的问题。最终发布程序已重新编译并通过22项自检和实际窗口操作检查；详见 [复查记录](docs/3d/RECHECK_20261113.md)。发布包使用 [新版运行说明](docs/3d/RELEASE_README.md)。
 
 三维山区滚石模拟程序：用 Jolt 刚体引擎模拟真实凸多面体石块沿参数化山坡滚落，支持固定随机障碍、弹性挡板，按批次做蒙特卡洛统计坡脚 10 m 高度范围内的路线概率，并在 raylib 三维界面中查看轨迹、热图和逐次试验回放。
 
@@ -27,7 +37,6 @@
 | --- | --- | --- |
 | Jolt Physics | v5.3.0 | 刚体物理 |
 | raylib | 5.5 | 窗口、渲染 |
-| raygui | 4.0 | 仅作头文件依赖，界面控件在 `src3d/ui/widgets.*` 自绘 |
 
 依赖放在仓库根目录的 `.deps3d/`（已被 .gitignore 忽略）。不需要单独安装字体：界面字体 Noto Sans SC 和地形纹理已在 `assets/` 中。
 
@@ -42,14 +51,14 @@ test_3d.cmd
 run_3d.cmd
 ```
 
-- `scripts3d\bootstrap.ps1`：克隆并校验 Jolt、raylib、raygui 到 `.deps3d\`（`-CoreOnly` 只取 Jolt）。**正常流程应先运行它。**依赖若放在别处，可在 CMake 里用 `RS_JoltPhysics_SOURCE_DIR`、`RS_raylib_SOURCE_DIR`、`RS_raygui_SOURCE_DIR` 指定。
-- `build_3d.cmd [Release|Debug] [--core]`：用 `vswhere` 自动找到本机最新的 Visual Studio（2022 / 2026）及其 CMake，不写死路径和生成器；已有的 `build\3d` 沿用原来的生成器。`--core` 只编核心库和测试，不含界面和 raylib。可设环境变量 `CMAKE_EXE` 指定另一个 cmake。Release 输出到 `build\3d\bin\`，Debug 输出到 `build\3d\bin\debug\`。
-- 构建时会把 `assets\` 复制到 exe 旁边（`build\3d\bin\assets\`），所以直接双击 exe 也能找到字体和纹理。
+- `scripts3d\bootstrap.ps1`：克隆并校验 Jolt、raylib 到 `.deps3d\`（`-CoreOnly` 只取 Jolt）。**正常流程应先运行它。**依赖若放在别处，可在 CMake 里用 `RS_JoltPhysics_SOURCE_DIR`、`RS_raylib_SOURCE_DIR` 指定。
+- `build_3d.cmd [Release|Debug] [--core]`：用 `vswhere` 自动找到本机最新的 Visual Studio（2022 / 2026）及其 CMake，不写死路径和生成器；已有的 `build\3d_final` 沿用原来的生成器。`--core` 只编核心库和测试，不含界面和 raylib。可设环境变量 `CMAKE_EXE` 指定另一个 cmake。Release 输出到 `build\3d_final\bin\`，Debug 输出到 `build\3d_final\bin\debug\`。
+- 构建时会把 `assets\` 复制到 exe 旁边（`build\3d_final\bin\assets\`），所以直接双击 exe 也能找到字体和纹理。
 - `scripts3d\package.ps1 [-Destination 目录]`：生成发布目录（exe、自检 exe、`assets`、`configs3d`、文档、依赖许可、`package-sha256.json`）。
 
 ## 4. 运行与命令行参数
 
-不带参数运行 `run_3d.cmd`（或双击 `build\3d\bin\RollingStone3D.exe`）打开三维程序。快捷启动：
+不带参数运行 `run_3d.cmd`（或双击 `build\3d_final\bin\RollingStone3D.exe`）打开三维程序。快捷启动：
 
 ```bat
 run_3d.cmd                                   :: 默认场景
@@ -155,7 +164,7 @@ RollingStone_ui-rebuild/
     cmake/            依赖与构建脚本（Jolt、raylib、观察器）
     observer/         Jolt 接触观察器头文件
     *.cpp / *.h       核心：配置、地形、物理、批处理、统计、结果存档、回放
-  tests3d/            测试（21 个 ctest 用例）
+  tests3d/            测试（22 个 ctest 用例（新增命令行严格解析））
   configs3d/          示例场景配置
   scripts3d/          bootstrap / package / vs_cmake 与 audit_* 验收脚本
   assets/             字体 fonts/、地形纹理 textures/terrain/
@@ -169,25 +178,25 @@ RollingStone_ui-rebuild/
 ## 8. 测试
 
 ```bat
-test_3d.cmd                    :: 等价于 ctest --test-dir build/3d -C Release --output-on-failure
+test_3d.cmd                    :: 等价于 ctest --test-dir build/3d_final -C Release --output-on-failure
 test_3d.cmd --geometry-full    :: 另跑完整几何验收（耗时长，输出到 results3d\geometry_acceptance）
 run_3d.cmd --self-test
 ```
 
-21 个 ctest 用例：ABI、输入归属、几何（解析 / 形态）、地形网格、物理动力学、统计 DDA、配置快照、静止回归、批处理输出与回放、会话与播放控制、弹性挡板（含组合演示）、接触观察器、固定障碍、全路径与首次触板、运动分块、存档事务、只读回放、界面模型（含障碍场景）。验收记录见 [docs/3d/VALIDATION.md](docs/3d/VALIDATION.md) 和 `docs/3d/evidence/`。
+22 个 ctest 用例（新增命令行严格解析）：ABI、输入归属、几何（解析 / 形态）、地形网格、物理动力学、统计 DDA、配置快照、静止回归、批处理输出与回放、会话与播放控制、弹性挡板（含组合演示）、接触观察器、固定障碍、全路径与首次触板、运动分块、存档事务、只读回放、界面模型（含障碍场景）。验收记录见 [docs/3d/VALIDATION.md](docs/3d/VALIDATION.md) 和 `docs/3d/evidence/`。
 
 ## 9. 素材与授权
 
 - 界面字体：Noto Sans SC（SIL OFL 1.1），`assets/fonts/`，授权 `licenses/NotoSansSC-OFL.txt`。
 - 地形纹理：Poly Haven 的 [cliff_side](https://polyhaven.com/a/cliff_side) 和 [dry_ground_rocks](https://polyhaven.com/a/dry_ground_rocks)（CC0 1.0），`assets/textures/terrain/`，说明见 `licenses/terrain-textures-CC0.txt`。
-- 代码依赖：Jolt Physics（MIT）、raylib 与 raygui（zlib/libpng）；发布包的 `licenses\` 附带各自许可原文。
+- 代码依赖：Jolt Physics（MIT）、raylib（zlib/libpng）；发布包的 `licenses\` 附带各自许可原文。
 
 ## 10. 已知限制
 
 - 首次触板图表示接触位置，不表示冲击力；小样本只给经验频率，不代表统计稳定。
 - 石块在全景里很小（半径约 2 m 对 60 m 的坡）；纹理为 1K，近景略软。
 - 地形纹理的平铺、亮度、饱和度等参数写在 `assets/textures/terrain/terrain.cfg`，修改后重启生效，界面里没有滑块。
-- `scripts3d/` 里的 `audit_gui.py`、`verify_deployment.py`、`audit_performance.py`、`benchmark_analysis.py` 依赖已不存在的命令行选项（如 `--capture`、`--font`、`--exercise-view`），当前不能直接运行，仅作历史记录保留。
+- 当前发布包使用 `scripts3d/verify_release.py` 验收；已删除调用旧界面参数的 `audit_gui.py`、`verify_deployment.py`。历史性能记录的格式与当前界面不同。
 
 ## 11. 小组成员
 

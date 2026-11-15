@@ -8,7 +8,7 @@ const FirstContactEvent*Replay::event()const{if(!analysis_||selected_<1||selecte
 const std::vector<std::shared_ptr<const DisplayTrajectory>>&Replay::trajectories()const{static const std::vector<std::shared_ptr<const DisplayTrajectory>> none;if(loaded_)return loaded_->trajectories;return analysis_?analysis_->trajectories:none;}
 void Replay::reset(){
     if(analysis_){trajectoryReader_.cancel();reader_.invalidate();}
-    analysis_.reset();location_.reset();loaded_.reset();sample_.reset();readError_.clear();follow_=true;playing_=false;eventPose_=false;needSeek_=false;selected_=1;cursor_=0;listed_.clear();cell_.reset();historyContext_=false;
+    analysis_.reset();location_.reset();loaded_.reset();sample_.reset();readError_.clear();follow_=true;playing_=false;eventPose_=false;needSeek_=false;selected_=1;cursor_=0;listed_.clear();cell_.reset();
 }
 bool Replay::eventShown()const{auto e=event();return !follow_&&e&&e->status==FirstContactStatus::hit&&(eventPose_||(cursor_>=e->timeLower&&cursor_<=e->timeUpper));}
 Snapshot Replay::eventSnapshot(Snapshot s)const{
@@ -43,7 +43,6 @@ void Replay::rebuildList(MapKind kind){
 void Replay::sync(const SessionView&v,double dt){
     config_=v.config;archive_=bool(v.archive);
     followAvailable_=v.phase==SessionPhase::preview&&!v.workerFinished&&v.trialId<=2;
-    historyContext_=bool(v.analysis);
     if(!v.analysis){if(analysis_)reset();return;}
     bool newRun=location_!=v.analysis->directory->location,changed=analysis_!=v.analysis;analysis_=v.analysis;
     if(newRun){

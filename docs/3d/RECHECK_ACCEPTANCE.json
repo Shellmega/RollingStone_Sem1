@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-13",
+  "passed": true,
+  "executable_sha256": "24a1acc3b459d2a85efe6e939eb5950ec096e6fd54f935a6113101e18af38a03",
+  "native_regression": {
+    "passed": true,
+    "gui_headless_identical": true,
+    "chinese_paths": true,
+    "preview_zero_honoured": true,
+    "readonly_physics_updates": 0,
+    "replay_pass": true,
+    "no_developer_environment": true,
+    "self_test_22": true,
+    "duplicate_capture_disabled": true,
+    "executable_sha256": "24a1acc3b459d2a85efe6e939eb5950ec096e6fd54f935a6113101e18af38a03"
+  },
+  "native_interaction": {
+    "passed": true,
+    "tab_once": true,
+    "shift_tab_once": true,
+    "edited_N": 3,
+    "edited_master_seed": 77,
+    "completed": 3,
+    "F1_opens_and_closes": true,
+    "minimum_window": "940x650",
+    "wide_window": "1600x900"
+  },
+  "visually_reviewed": {
+    "goto_enter_selects_trial_3": true,
+    "invalid_0_retains_selection_and_warns": true,
+    "playback_cursor_advances": true,
+    "narrow_toolbar_inside_view": true,
+    "wide_toolbar_inside_view": true,
+    "F1_overlay_visible": true
+  },
+  "user_result_files_unchanged": 442,
+  "preexisting_screenshot_overwritten_during_test": {
+    "path": "screenshot000.png",
+    "original_sha256": "9ea07c106987a65a06af64be597cedb0ee2ade59fba2d4eb8a561a1d95531736",
+    "original_copy_not_found": true,
+    "reason": "Raylib built-in F12 handler; disabled in final build."
+  },
+  "screenshots": [
+    "images/recheck_narrow.png",
+    "images/recheck_wide.png",
+    "images/recheck_help.png",
+    "images/recheck_goto.png",
+    "images/recheck_invalid.png",
+    "images/recheck_playback.png"
+  ],
+  "limits": "Local Windows x64 validation; not a calibration or guarantee for arbitrary physical parameters or hardware."
+}

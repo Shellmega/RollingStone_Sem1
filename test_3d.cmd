@@ -7,12 +7,12 @@ if not defined RS_CTEST (
   popd
   exit /b 1
 )
-echo Current suite: 21 ABI/input/geometry/physics/barrier/obstacle/analysis/archive/playback/UI-model tests. Native GUI acceptance remains separate.
-"%RS_CTEST%" --test-dir build/3d -C Release --output-on-failure
+echo Current suite: 22 ABI/CLI/input/geometry/physics/barrier/obstacle/analysis/archive/playback/UI-model tests. Native GUI acceptance remains separate.
+"%RS_CTEST%" --test-dir build/3d_final -C Release --output-on-failure
 set "RS_EXIT=%errorlevel%"
 if not "%RS_EXIT%"=="0" goto done
 if /I "%~1"=="--geometry-full" (
-  build\3d\bin\rs3d_geometry_tests.exe --full results3d\geometry_acceptance
+  build\3d_final\bin\rs3d_geometry_tests.exe --full results3d\geometry_acceptance
   if errorlevel 1 set "RS_EXIT=1"
 )
 :done
